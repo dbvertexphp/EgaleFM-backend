@@ -14,6 +14,8 @@ import {
   getAllUsers,
   getDashboardStats,
   getUserStoryByIdAdmin,
+  getUsersWithStories,
+  getStoriesByUserAdmin
 } from '../../controllers/admin/admin.controller.js';
 import upload from '../../middleware/upload.js';
 import { protect } from '../../middleware/authMiddleware.js';
@@ -55,6 +57,22 @@ router.patch(
   protect,
 
   updateStoryStatus
+);
+
+// USERS WITH STORY COUNT
+router.get(
+  '/users-with-stories',
+  protect,
+  authorize('admin'),
+  getUsersWithStories
+);
+
+// STORIES OF SPECIFIC USER (FOR MODAL)
+router.get(
+  '/user-stories/by-user/:userId',
+  protect,
+  authorize('admin'),
+  getStoriesByUserAdmin
 );
 
 router.get('/user-stories/:id', protect, getUserStoryByIdAdmin);

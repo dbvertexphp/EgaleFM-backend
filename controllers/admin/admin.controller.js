@@ -313,11 +313,48 @@ export const getDashboardStats = async (req, res) => {
 };
 
 // UPDATE STORY STATUS (ADMIN)
+// export const updateStoryStatus = async (req, res, next) => {
+//   try {
+//     const { status, adminRemark } = req.body;
+
+//     if (!['approved', 'rejected'].includes(status)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Invalid status',
+//       });
+//     }
+
+//     const story = await UserStory.findById(req.params.id);
+
+//     if (!story) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Story not found',
+//       });
+//     }
+
+//     story.status = status;
+//     story.adminRemark = adminRemark || '';
+
+//     await story.save();
+
+//     res.status(200).json({
+//       success: true,
+//       message: `Story ${status} successfully`,
+//       data: story,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 export const updateStoryStatus = async (req, res, next) => {
   try {
     const { status, adminRemark } = req.body;
 
-    if (!['approved', 'rejected'].includes(status)) {
+    const normalizedStatus = status?.toLowerCase();
+
+    if (!['pending', 'approved', 'rejected'].includes(normalizedStatus)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid status',
@@ -333,21 +370,20 @@ export const updateStoryStatus = async (req, res, next) => {
       });
     }
 
-    story.status = status;
+    story.status = normalizedStatus;
     story.adminRemark = adminRemark || '';
 
     await story.save();
 
     res.status(200).json({
       success: true,
-      message: `Story ${status} successfully`,
+      message: `Story ${normalizedStatus} successfully`,
       data: story,
     });
   } catch (error) {
     next(error);
   }
 };
-
 // GET ALL USER STORIES (ADMIN)
 export const getAllUserStories = async (req, res, next) => {
   try {
@@ -387,6 +423,66 @@ export const getUserStoryByIdAdmin = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: story,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET USERS WHO HAVE STORIES (ADMIN)
+
+export const getUsersWithStories = async (req, res, next) => {
+  try {
+    const users = await UserStory.aggregate([
+      {
+        $group: {
+          _id: '$user',
+          storyCount: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users', // User collection name
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: '$user' },
+
+      {
+        $project: {
+          _id: '$user._id',
+          name: '$user.name',
+          email: '$user.email',
+          storyCount: 1,
+        },
+      },
+      { $sort: { storyCount: -1 } },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET STORIES OF A SPECIFIC USER (ADMIN)
+export const getStoriesByUserAdmin = async (req, res, next) => {
+  try {
+    const stories = await UserStory.find({
+      user: req.params.userId,
+    })
+      .populate('category', 'name')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: stories.length,
+      data: stories,
     });
   } catch (error) {
     next(error);
