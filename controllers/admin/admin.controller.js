@@ -370,7 +370,7 @@ export const getAllUserStories = async (req, res, next) => {
   }
 };
 
-// GET SINGLE USER STORY BY ID (ADMIN)
+// GET SINGLE USER STORY BY ID (ADMINs)
 export const getUserStoryByIdAdmin = async (req, res, next) => {
   try {
     const story = await UserStory.findById(req.params.id)
