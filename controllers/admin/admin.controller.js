@@ -8,6 +8,7 @@ import Payment from '../../models/admin/Transaction/Transaction.js';
 import StoryCategory from '../../models/admin/Category/category.model.js';
 import StoryChapter from '../../models/admin/Story-chapter/storyChapter.model.js';
 import StoryTopic from '../../models/admin/Story-Topic/storyTopic.model.js';
+import UserStory from '../../models/user/UserStory.model.js';
 
 export const loginAdmin = async (req, res) => {
   try {
@@ -308,5 +309,86 @@ export const getDashboardStats = async (req, res) => {
       message: 'Failed to fetch dashboard stats',
       error: error.message,
     });
+  }
+};
+
+// UPDATE STORY STATUS (ADMIN)
+export const updateStoryStatus = async (req, res, next) => {
+  try {
+    const { status, adminRemark } = req.body;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status',
+      });
+    }
+
+    const story = await UserStory.findById(req.params.id);
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    story.status = status;
+    story.adminRemark = adminRemark || '';
+
+    await story.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Story ${status} successfully`,
+      data: story,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET ALL USER STORIES (ADMIN)
+export const getAllUserStories = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+
+    const filter = status ? { status } : {};
+
+    const stories = await UserStory.find(filter)
+      .populate('user', 'name email')
+      .populate('category', 'name')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: stories.length,
+      data: stories,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET SINGLE USER STORY BY ID (ADMIN)
+export const getUserStoryByIdAdmin = async (req, res, next) => {
+  try {
+    const story = await UserStory.findById(req.params.id)
+      .populate('user', 'name email')
+      .populate('category', 'name');
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: story,
+    });
+  } catch (error) {
+    next(error);
   }
 };

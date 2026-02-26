@@ -1,7 +1,6 @@
 import express from 'express';
 import {
   changePassword,
-
   forgetPassword,
   getSlugByQuery,
   getUserData,
@@ -11,27 +10,22 @@ import {
   resendOtp,
   verifyEmail,
   verifyMobile,
-
-
-
-
   logout,
-
-getMe,
-
-
-
+  getMe,
 } from '../../controllers/user/userController.js';
+import {
+  createUserStory,
+  getMyStories,
+  getMyStoryById,
+  toggleLikeStory,
+  addCommentToStory,
+} from '../../controllers/user/userStory.controller.js';
 
 import { getAboutUs } from '../../controllers/admin/AboutUs/aboutus.controller.js';
 import { getPrivacyPolicy } from '../../controllers/admin/PrivacyPolicy/privacy.controller.js';
 import { getTerms } from '../../controllers/admin/Terms&Condition/terms.controller.js';
-
-
-
+import uploadStoryFile from '../../middleware/upload.js';
 import { protect } from '../../middleware/authMiddleware.js';
-
-
 
 import { otpLimiter } from '../../middleware/limiter.js';
 
@@ -151,23 +145,26 @@ userRouter.post('/logout', protect, logout);
 userRouter.get('/auth-me', protect, getMe);
 userRouter.post('/forgot-password', otpLimiter, forgetPassword);
 userRouter.post('/change-password', otpLimiter, changePassword);
+userRouter.post(
+  '/create-story',
+  protect,
+  uploadStoryFile.single('textFile'),
+  createUserStory
+);
 
+userRouter.get('/my-stories', protect, getMyStories);
 
+userRouter.get('/my-stories/:id', protect, getMyStoryById);
 
+userRouter.patch('/stories/:id/like', protect, toggleLikeStory);
 
-
-
-
+userRouter.post('/stories/:id/comment', protect, addCommentToStory);
 
 userRouter.get('/slug', getSlugByQuery);
 userRouter.get('/about-us', getAboutUs);
 userRouter.get('/privacy-policy', getPrivacyPolicy);
 userRouter.get('/terms-conditions', getTerms);
 
-
 userRouter.get('/profile/:id', protect, getUserData);
-
-
-
 
 export default userRouter;

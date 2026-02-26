@@ -2,16 +2,18 @@ import express from 'express';
 import {
   addSlug,
   loginAdmin,
+  updateStoryStatus,
   getAllRatings,
 } from '../../controllers/admin/admin.controller.js';
 // import { validateAdminToken } from '../middleware/adminToken.middleware.js';
-
+import { getAllUserStories } from '../../controllers/admin/admin.controller.js';
 import {
   getAdminProfile,
   updateAdminProfile,
   changeAdminPassword,
   getAllUsers,
   getDashboardStats,
+  getUserStoryByIdAdmin,
 } from '../../controllers/admin/admin.controller.js';
 import upload from '../../middleware/upload.js';
 import { protect } from '../../middleware/authMiddleware.js';
@@ -43,5 +45,18 @@ router.put('/change-password', protect, changeAdminPassword);
 router.post('/slug', addSlug);
 
 router.get('/all-ratings', getAllRatings);
+
+// GET all stories
+router.get('/user-stories', protect, getAllUserStories);
+
+// Approve / Reject
+router.patch(
+  '/user-stories/:id/status',
+  protect,
+
+  updateStoryStatus
+);
+
+router.get('/user-stories/:id', protect, getUserStoryByIdAdmin);
 
 export default router;

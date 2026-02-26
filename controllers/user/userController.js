@@ -5,20 +5,10 @@ import { sendFormEmail } from '../../config/mail.js';
 import PageModel from '../../models/admin/pageModel.js';
 import generateToken from '../../config/generateToken.js';
 
-
-
-
-
-
 import { OAuth2Client } from 'google-auth-library';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-
-
 import { enforceSubscription } from '../../utils/subscriptionHelper.js';
-
-
-
 
 export const loginByGoogle = async (req, res, next) => {
   console.log('Server time before verify:', new Date().toISOString());
