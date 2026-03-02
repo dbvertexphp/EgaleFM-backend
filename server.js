@@ -67,7 +67,6 @@ const uploadDirs = [
   './uploads/mcq-images',
   './uploads/admin-profile',
   './uploads/user-profile',
-  './uploads/user-stories',
 ];
 
 uploadDirs.forEach((dir) => {

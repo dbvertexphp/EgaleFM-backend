@@ -27,6 +27,27 @@ const userStorySchema = new mongoose.Schema(
 
     adminRemark: { type: String, default: '' },
 
+    audioTitle: {
+      type: String,
+    },
+
+    audioDescription: {
+      type: String,
+    },
+
+    audioFile: {
+      type: String,
+    },
+
+    isAudioPublished: {
+      type: Boolean,
+      default: false,
+    },
+
+    audioPublishedAt: {
+      type: Date,
+    },
+
     // ❤️ LIKES
     likes: [
       {

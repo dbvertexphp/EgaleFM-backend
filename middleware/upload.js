@@ -86,9 +86,13 @@ import path from 'path';
 import fs from 'fs';
 
 // 📁 Folders
-const chapterImageDir = 'uploads/story-chapter-image';
-const storyAudioDir = 'uploads/story-audio';
-const userStoryDir = 'uploads/user-stories'; // ✅ NEW
+// ✅ Absolute base path (VERY IMPORTANT)
+const __dirname = path.resolve();
+
+// 📁 Absolute folders (Production Safe)
+const chapterImageDir = path.join(__dirname, 'uploads/story-chapter-image');
+const storyAudioDir = path.join(__dirname, 'uploads/story-audio');
+const userStoryDir = path.join(__dirname, 'uploads/user-stories');
 
 // Ensure directories exist
 [chapterImageDir, storyAudioDir, userStoryDir].forEach((dir) => {
@@ -100,13 +104,19 @@ const userStoryDir = 'uploads/user-stories'; // ✅ NEW
 // 🗂 Storage Config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    if (req.originalUrl.includes('story-topics')) {
-      cb(null, storyAudioDir);
-    } else if (req.originalUrl.includes('create-story')) {
-      cb(null, userStoryDir); // ✅ NEW
-    } else {
-      cb(null, chapterImageDir);
+    if (req.originalUrl.includes('upload-audio')) {
+      return cb(null, storyAudioDir);
     }
+
+    if (req.originalUrl.includes('story-topics')) {
+      return cb(null, storyAudioDir);
+    }
+
+    if (req.originalUrl.includes('create-story')) {
+      return cb(null, userStoryDir);
+    }
+
+    return cb(null, chapterImageDir);
   },
 
   filename: function (req, file, cb) {
@@ -138,7 +148,17 @@ const fileFilter = (req, file, cb) => {
 
   const ext = path.extname(file.originalname).toLowerCase();
   const mime = file.mimetype;
+  // 🎧 AUDIO — Admin Upload Story Audio
+  if (req.originalUrl.includes('upload-audio')) {
+    const isAudio =
+      audioTypes.test(ext) && (mime.includes('audio') || audioTypes.test(mime));
 
+    if (!isAudio) {
+      return cb(new Error('Only audio files (mp3, wav) allowed'));
+    }
+
+    return cb(null, true);
+  }
   // 🎧 AUDIO — Story Topics
   if (req.originalUrl.includes('story-topics')) {
     const isAudio =

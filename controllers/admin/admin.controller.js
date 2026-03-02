@@ -9,6 +9,7 @@ import StoryCategory from '../../models/admin/Category/category.model.js';
 import StoryChapter from '../../models/admin/Story-chapter/storyChapter.model.js';
 import StoryTopic from '../../models/admin/Story-Topic/storyTopic.model.js';
 import UserStory from '../../models/user/UserStory.model.js';
+import Notification from '../../models/user/Notification.model.js';
 
 export const loginAdmin = async (req, res) => {
   try {
@@ -374,7 +375,15 @@ export const updateStoryStatus = async (req, res, next) => {
     story.adminRemark = adminRemark || '';
 
     await story.save();
-
+    // 🔔 Send notification when story approved
+    if (normalizedStatus === 'approved') {
+      await Notification.create({
+        user: story.user,
+        title: 'Your Story Has Been Approved 🎉',
+        message: `Your story "${story.title}" has been approved by admin.`,
+        type: 'story_text_approved',
+      });
+    }
     res.status(200).json({
       success: true,
       message: `Story ${normalizedStatus} successfully`,
@@ -483,6 +492,129 @@ export const getStoriesByUserAdmin = async (req, res, next) => {
       success: true,
       count: stories.length,
       data: stories,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ADMIN UPLOAD STORY AUDIO
+export const uploadStoryAudio = async (req, res, next) => {
+  try {
+    const { storyId } = req.params;
+    const { audioTitle, audioDescription } = req.body;
+
+    if (!audioTitle || !audioDescription) {
+      return res.status(400).json({
+        success: false,
+        message: 'Audio title and description are required',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Audio file is required',
+      });
+    }
+
+    const story = await UserStory.findById(storyId).populate('user');
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    // ✅ Story must be approved first
+    if (story.status !== 'approved') {
+      return res.status(400).json({
+        success: false,
+        message: 'Only approved stories can be converted to audio',
+      });
+    }
+
+    // Save audio details
+    story.audioTitle = audioTitle;
+    story.audioDescription = audioDescription;
+    story.audioFile = `/uploads/story-audio/${req.file.filename}`;
+    story.isAudioPublished = true;
+    story.audioPublishedAt = new Date();
+
+    await story.save();
+    // 🔔 Send notification when audio published
+    await Notification.create({
+      user: story.user._id,
+      title: 'Your Story is Now Available in Audio 🎧',
+      message: `Your story "${story.title}" has been converted into audio format.`,
+      type: 'story_audio_published',
+    });
+    res.status(200).json({
+      success: true,
+      message: 'Story audio uploaded successfully',
+      data: story,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// ADMIN UNPUBLISH STORY AUDIO
+export const unpublishStoryAudio = async (req, res, next) => {
+  try {
+    const { storyId } = req.params;
+
+    const story = await UserStory.findById(storyId).populate('user');
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    if (!story.isAudioPublished) {
+      return res.status(400).json({
+        success: false,
+        message: 'Audio is already unpublished',
+      });
+    }
+
+    // Optional: delete audio file from server
+    if (story.audioFile) {
+      const fs = await import('fs');
+      const path = await import('path');
+
+      const filePath = path.resolve().concat(story.audioFile);
+
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Reset fields
+    story.audioTitle = null;
+    story.audioDescription = null;
+    story.audioFile = null;
+    story.isAudioPublished = false;
+    story.audioPublishedAt = null;
+
+    await story.save();
+
+    // 🔔 Send notification
+    await Notification.create({
+      user: story.user._id,
+      title: 'Story Audio Removed',
+      message: `Audio version of your story "${story.title}" has been unpublished by admin.`,
+      type: 'story_audio_published',
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Story audio unpublished successfully',
+      data: story,
     });
   } catch (error) {
     next(error);

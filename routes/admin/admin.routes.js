@@ -4,6 +4,8 @@ import {
   loginAdmin,
   updateStoryStatus,
   getAllRatings,
+  uploadStoryAudio,
+  unpublishStoryAudio
 } from '../../controllers/admin/admin.controller.js';
 // import { validateAdminToken } from '../middleware/adminToken.middleware.js';
 import { getAllUserStories } from '../../controllers/admin/admin.controller.js';
@@ -76,5 +78,19 @@ router.get(
 );
 
 router.get('/user-stories/:id', protect, getUserStoryByIdAdmin);
+
+
+router.put(
+  '/story/:storyId/upload-audio',
+  protect,
+  upload.single('audio'),
+  uploadStoryAudio
+);
+
+router.put(
+  '/story/:storyId/unpublish-audio',
+  protect,
+  unpublishStoryAudio
+);
 
 export default router;
