@@ -504,6 +504,11 @@ export const uploadStoryAudio = async (req, res, next) => {
     const { storyId } = req.params;
     const { audioTitle, audioDescription } = req.body;
 
+    // 🔥 Convert boolean safely
+    const isAudioPublished =
+      req.body.isAudioPublished === 'true' ||
+      req.body.isAudioPublished === true;
+
     if (!audioTitle || !audioDescription) {
       return res.status(400).json({
         success: false,
@@ -527,7 +532,6 @@ export const uploadStoryAudio = async (req, res, next) => {
       });
     }
 
-    // ✅ Story must be approved first
     if (story.status !== 'approved') {
       return res.status(400).json({
         success: false,
@@ -535,31 +539,40 @@ export const uploadStoryAudio = async (req, res, next) => {
       });
     }
 
-    // Save audio details
+    // ✅ SAVE AUDIO
     story.audioTitle = audioTitle;
     story.audioDescription = audioDescription;
     story.audioFile = `/uploads/story-audio/${req.file.filename}`;
-    story.isAudioPublished = true;
-    story.audioPublishedAt = new Date();
+    story.isAudioPublished = isAudioPublished;
+
+    if (isAudioPublished) {
+      story.audioPublishedAt = new Date();
+    } else {
+      story.audioPublishedAt = null;
+    }
 
     await story.save();
-    // 🔔 Send notification when audio published
-    await Notification.create({
-      user: story.user._id,
-      title: 'Your Story is Now Available in Audio 🎧',
-      message: `Your story "${story.title}" has been converted into audio format.`,
-      type: 'story_audio_published',
-    });
-    res.status(200).json({
+
+    // 🔔 Notify only if published
+    if (isAudioPublished) {
+      await Notification.create({
+        user: story.user._id,
+        title: 'Your Story is Now Available in Audio 🎧',
+        message: `Your story "${story.title}" is now live in audio format.`,
+        type: 'story_audio_published',
+      });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: 'Story audio uploaded successfully',
+      message: `Audio ${isAudioPublished ? 'uploaded & published' : 'uploaded as draft'}`,
       data: story,
     });
   } catch (error) {
+    console.error(error);
     next(error);
   }
 };
-
 
 // ADMIN UNPUBLISH STORY AUDIO
 export const unpublishStoryAudio = async (req, res, next) => {
@@ -614,6 +627,37 @@ export const unpublishStoryAudio = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Story audio unpublished successfully',
+      data: story,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// New Controller to Toggle Publish Status (Without deleting file)
+export const toggleAudioPublish = async (req, res, next) => {
+  try {
+    const { storyId } = req.params;
+    const story = await UserStory.findById(storyId);
+
+    if (!story || !story.audioFile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story or Audio file not found. Upload audio first.',
+      });
+    }
+
+    // Toggle the status
+    story.isAudioPublished = !story.isAudioPublished;
+    if (story.isAudioPublished) {
+      story.audioPublishedAt = new Date();
+    }
+
+    await story.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Audio ${story.isAudioPublished ? 'published' : 'unpublished'} successfully`,
       data: story,
     });
   } catch (error) {

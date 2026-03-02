@@ -58,20 +58,22 @@ const app = express();
 
 // Connect Database
 connectDB();
-
+const __dirname = path.resolve();
 // Create Uploads Directory if not exists
-// Create Uploads Directories if not exists
 const uploadDirs = [
-  './uploads/videos',
-  './uploads/chapter-image',
-  './uploads/mcq-images',
-  './uploads/admin-profile',
-  './uploads/user-profile',
+  'uploads/story-cover',
+  'uploads/story-chapter-image',
+  'uploads/story-audio',
+  'uploads/user-stories',
+  'uploads/videos',
+  'uploads/admin-profile',
+  'uploads/user-profile',
 ];
 
 uploadDirs.forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  const fullPath = path.join(__dirname, dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
   }
 });
 
@@ -117,7 +119,6 @@ app.use(cors());
 app.use(express.json({ limit: '250mb' }));
 app.use(express.urlencoded({ extended: true, limit: '250mb' }));
 
-const __dirname = path.resolve();
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Swagger UI route

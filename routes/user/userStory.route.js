@@ -1,15 +1,18 @@
-import express from 'express';
-import { createUserStory } from '../../controllers/user/userStory.controller.js';
-import { uploadStoryFile } from '../../middleware/upload.js';
-import { userAuth } from '../../middleware/authMiddleware.js';
+// import express from 'express';
+// import { createUserStory } from '../../controllers/user/userStory.controller.js';
+// import upload from '../../middleware/upload.js';
+// import { protect } from '../../middleware/authMiddleware.js';
 
-const router = express.Router();
+// const router = express.Router();
+// router.post(
+//   '/create-story',
+//   protect,
+//   upload.fields([
+//     { name: 'coverImage', maxCount: 1 },
+//     { name: 'chapterImages', maxCount: 20 },
+//     { name: 'textFile', maxCount: 1 },
+//   ]),
+//   createUserStory
+// );
 
-router.post(
-  '/create-story',
-  userAuth,
-  uploadStoryFile.single('textFile'),
-  createUserStory
-);
-
-export default router;
+// export default router;

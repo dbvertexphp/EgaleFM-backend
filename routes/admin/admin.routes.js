@@ -5,7 +5,8 @@ import {
   updateStoryStatus,
   getAllRatings,
   uploadStoryAudio,
-  unpublishStoryAudio
+  unpublishStoryAudio,
+  toggleAudioPublish,
 } from '../../controllers/admin/admin.controller.js';
 // import { validateAdminToken } from '../middleware/adminToken.middleware.js';
 import { getAllUserStories } from '../../controllers/admin/admin.controller.js';
@@ -17,7 +18,7 @@ import {
   getDashboardStats,
   getUserStoryByIdAdmin,
   getUsersWithStories,
-  getStoriesByUserAdmin
+  getStoriesByUserAdmin,
 } from '../../controllers/admin/admin.controller.js';
 import upload from '../../middleware/upload.js';
 import { protect } from '../../middleware/authMiddleware.js';
@@ -79,18 +80,15 @@ router.get(
 
 router.get('/user-stories/:id', protect, getUserStoryByIdAdmin);
 
-
 router.put(
   '/story/:storyId/upload-audio',
   protect,
-  upload.single('audio'),
+  upload.single('audioFile'),
   uploadStoryAudio
 );
 
-router.put(
-  '/story/:storyId/unpublish-audio',
-  protect,
-  unpublishStoryAudio
-);
+router.put('/story/:storyId/unpublish-audio', protect, unpublishStoryAudio);
 
+// Existing upload and unpublish routes ke beech mein ya niche add karein
+router.patch('/story/:storyId/toggle-publish', protect, toggleAudioPublish);
 export default router;

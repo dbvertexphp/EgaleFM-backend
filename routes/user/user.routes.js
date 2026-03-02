@@ -151,7 +151,11 @@ userRouter.post('/change-password', otpLimiter, changePassword);
 userRouter.post(
   '/create-story',
   protect,
-  uploadStoryFile.single('textFile'),
+  uploadStoryFile.fields([
+    { name: 'coverImage', maxCount: 1 },
+    { name: 'chapterImages', maxCount: 20 },
+    { name: 'textFile', maxCount: 1 },
+  ]),
   createUserStory
 );
 

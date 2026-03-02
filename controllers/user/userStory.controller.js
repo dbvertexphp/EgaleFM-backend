@@ -1,10 +1,94 @@
 import UserStory from '../../models/user/UserStory.model.js';
 import StoryCategory from '../../models/admin/Category/category.model.js';
 
+// export const createUserStory = async (req, res, next) => {
+//   try {
+//     const { category, title, description, chapters } = req.body;
+
+//     if (!category || !title || !description) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'All fields are required',
+//       });
+//     }
+
+//     const categoryExists = await StoryCategory.findById(category);
+
+//     if (!categoryExists) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Category not found',
+//       });
+//     }
+//     if (!req.files?.textFile) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Text file is required',
+//       });
+//     }
+//     // Cover Image
+//     const coverImage = req.files?.coverImage
+//       ? req.files.coverImage[0].path.replace(/\\/g, '/')
+//       : null;
+
+//     // Text File
+//     const textFile = req.files?.textFile
+//       ? req.files.textFile[0].path.replace(/\\/g, '/')
+//       : null;
+
+//     // Parse chapters JSON (frontend se string me aayega)
+//     let parsedChapters = [];
+//     if (chapters) {
+//       try {
+//         parsedChapters = JSON.parse(chapters);
+//       } catch (err) {
+//         return res.status(400).json({
+//           success: false,
+//           message: 'Invalid chapters JSON format',
+//         });
+//       }
+//       if (
+//         req.files?.chapterImages &&
+//         parsedChapters.length !== req.files.chapterImages.length
+//       ) {
+//         return res.status(400).json({
+//           success: false,
+//           message: 'Chapter and image count mismatch',
+//         });
+//       }
+//       if (req.files?.chapterImages) {
+//         parsedChapters = parsedChapters.map((chapter, index) => ({
+//           ...chapter,
+//           image: req.files.chapterImages[index]
+//             ? req.files.chapterImages[index].path.replace(/\\/g, '/')
+//             : null,
+//         }));
+//       }
+//     }
+
+//     const story = await UserStory.create({
+//       user: req.user._id,
+//       category,
+//       title,
+//       description,
+//       coverImage,
+//       textFile,
+//       chapters: parsedChapters,
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       message: 'Story submitted successfully. Waiting for admin approval.',
+//       data: story,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 export const createUserStory = async (req, res, next) => {
   try {
-    const { category, title, description } = req.body;
-
+    const { category, title, description, chapters } = req.body;
+    console.log('req.body:', req.body);
     if (!category || !title || !description) {
       return res.status(400).json({
         success: false,
@@ -21,19 +105,60 @@ export const createUserStory = async (req, res, next) => {
       });
     }
 
-    if (!req.file) {
+    if (!req.files?.textFile) {
       return res.status(400).json({
         success: false,
-        message: 'Text file required',
+        message: 'Text file is required',
       });
     }
 
+    // ✅ Save ONLY relative path (IMPORTANT)
+    const coverImage = req.files?.coverImage
+      ? `/uploads/story-cover/${req.files.coverImage[0].filename}`
+      : null;
+
+    const textFile = `/uploads/user-stories/${req.files.textFile[0].filename}`;
+
+    let parsedChapters = [];
+
+    if (chapters) {
+      try {
+        parsedChapters = JSON.parse(chapters);
+      } catch {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid chapters JSON format',
+        });
+      }
+
+      if (
+        req.files?.chapterImages &&
+        parsedChapters.length !== req.files.chapterImages.length
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Chapter and image count mismatch',
+        });
+      }
+
+      if (req.files?.chapterImages) {
+        parsedChapters = parsedChapters.map((chapter, index) => ({
+          ...chapter,
+          image: req.files.chapterImages[index]
+            ? `/uploads/story-chapter-image/${req.files.chapterImages[index].filename}`
+            : null,
+        }));
+      }
+    }
+    console.log('req.files:', req.files);
     const story = await UserStory.create({
-      user: req.user._id, // ✅ correct
+      user: req.user._id,
       category,
       title,
       description,
-      textFile: req.file.path.replace(/\\/g, '/'),
+      coverImage,
+      textFile,
+      chapters: parsedChapters,
     });
 
     res.status(201).json({
@@ -45,7 +170,6 @@ export const createUserStory = async (req, res, next) => {
     next(error);
   }
 };
-
 // GET MY STORIES (USER)
 export const getMyStories = async (req, res, next) => {
   try {
