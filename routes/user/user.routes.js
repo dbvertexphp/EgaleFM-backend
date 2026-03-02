@@ -19,6 +19,9 @@ import {
   getMyStoryById,
   toggleLikeStory,
   addCommentToStory,
+  toggleLikeChapter,
+  addCommentToChapter,
+  getChapterComments,
 } from '../../controllers/user/userStory.controller.js';
 
 import { getAboutUs } from '../../controllers/admin/AboutUs/aboutus.controller.js';
@@ -166,6 +169,27 @@ userRouter.get('/my-stories/:id', protect, getMyStoryById);
 userRouter.patch('/stories/:id/like', protect, toggleLikeStory);
 
 userRouter.post('/stories/:id/comment', protect, addCommentToStory);
+
+// LIKE / UNLIKE CHAPTER
+userRouter.patch(
+  '/stories/:storyId/chapters/:chapterId/like',
+  protect,
+  toggleLikeChapter
+);
+
+// ADD COMMENT TO CHAPTER
+userRouter.post(
+  '/stories/:storyId/chapters/:chapterId/comment',
+  protect,
+  addCommentToChapter
+);
+
+// GET CHAPTER COMMENTS
+userRouter.get(
+  '/stories/:storyId/chapters/:chapterId/comments',
+  protect,
+  getChapterComments
+);
 
 userRouter.get('/notifications', protect, getMyNotifications);
 

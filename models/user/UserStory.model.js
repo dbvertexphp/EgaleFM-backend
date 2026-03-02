@@ -18,8 +18,39 @@ const chapterSchema = new mongoose.Schema(
     },
 
     image: {
-      type: String, // chapter image path
+      type: String,
     },
+
+    /* =========================
+       CHAPTER LIKES
+    ========================= */
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+
+    /* =========================
+       CHAPTER COMMENTS
+    ========================= */
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        text: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

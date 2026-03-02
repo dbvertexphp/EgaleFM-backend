@@ -312,3 +312,132 @@ export const getStoryComments = async (req, res, next) => {
     next(error);
   }
 };
+
+
+export const toggleLikeChapter = async (req, res, next) => {
+  try {
+    const { storyId, chapterId } = req.params;
+    const userId = req.user._id;
+
+    const story = await UserStory.findById(storyId);
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    const chapter = story.chapters.id(chapterId);
+
+    if (!chapter) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chapter not found',
+      });
+    }
+
+    const alreadyLiked = chapter.likes.includes(userId);
+
+    if (alreadyLiked) {
+      chapter.likes = chapter.likes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+    } else {
+      chapter.likes.push(userId);
+    }
+
+    await story.save();
+
+    res.status(200).json({
+      success: true,
+      liked: !alreadyLiked,
+      totalLikes: chapter.likes.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addCommentToChapter = async (req, res, next) => {
+  try {
+    const { storyId, chapterId } = req.params;
+    const { text } = req.body;
+
+    if (!text) {
+      return res.status(400).json({
+        success: false,
+        message: 'Comment text required',
+      });
+    }
+
+    const story = await UserStory.findById(storyId);
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    const chapter = story.chapters.id(chapterId);
+
+    if (!chapter) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chapter not found',
+      });
+    }
+
+    chapter.comments.push({
+      user: req.user._id,
+      text,
+    });
+
+    await story.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Comment added to chapter',
+      totalComments: chapter.comments.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getChapterComments = async (req, res, next) => {
+  try {
+    const { storyId, chapterId } = req.params;
+
+    const story = await UserStory.findById(storyId).populate(
+      'chapters.comments.user',
+      'name email image'
+    );
+
+    if (!story) {
+      return res.status(404).json({
+        success: false,
+        message: 'Story not found',
+      });
+    }
+
+    const chapter = story.chapters.id(chapterId);
+
+    if (!chapter) {
+      return res.status(404).json({
+        success: false,
+        message: 'Chapter not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: chapter.comments.length,
+      data: chapter.comments,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
